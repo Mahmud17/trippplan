@@ -82,40 +82,6 @@ st.markdown("""<style>
     .css-1d391kg { color: #00796b; }
 </style>""", unsafe_allow_html=True)
 
-# Function to get coordinates using geopy
-def get_coordinates(location_name):
-    geolocator = Nominatim(user_agent="travel_itinerary")
-    try:
-        location = geolocator.geocode(location_name)
-        if location:
-            return [location.latitude, location.longitude]
-    except Exception as e:
-        st.error(f"Error getting coordinates: {e}")
-        return None
-
-# Function to create the map with search feature
-def create_map():
-    m = folium.Map(location=[36.5, 127.5], zoom_start=7)
-    feature_group = folium.FeatureGroup(name="Itinerary Locations").add_to(m)
-
-    for loc in st.session_state.itinerary["Location"]:
-        coords = get_coordinates(loc)
-        if coords:
-            google_maps_link = f"https://www.google.com/maps/search/{loc.replace(' ', '+')}"
-            folium.Marker(
-                location=coords,
-                popup=f"<a href='{google_maps_link}' target='_blank'>{loc}</a>"
-            ).add_to(feature_group)
-
-    folium.plugins.Search(
-        layer=feature_group,
-        search_zoom=12,
-        placeholder='Search for a place',
-        collapsed=False
-    ).add_to(m)
-
-    return m
-
 # Display map with search feature
 if sidebar_menu == "Home":
     st.title("🌍 Welcome to Your Travel Itinerary!")
@@ -124,8 +90,6 @@ if sidebar_menu == "Home":
 
 elif sidebar_menu == "Itinerary":
     st.title("🌍 Travel Itinerary - South Korea")
-    m = create_map()
-    st_folium(m, width=700, height=500)
 
     st.write("### 📅 Trip Overview")
     st.dataframe(st.session_state.itinerary, use_container_width=True)
