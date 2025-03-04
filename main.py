@@ -12,7 +12,7 @@ import uuid
 
 # Check if Firebase app is already initialized
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase.json")
+    cred = credentials.Certificate("firebase_cred.json")
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
@@ -84,9 +84,10 @@ st.markdown("""<style>
 
 # Display map with search feature
 if sidebar_menu == "Home":
-    st.title("🌍 Welcome to Your Travel Itinerary!")
+    st.title("🌍 Welcome to Our South Korea Travel Itinerary!")
     st.write("Here, you can manage your travel plans, locations, and activities. Navigate through the sidebar to edit your itinerary, add notes, and more.")
-    st.image("southKoreaHero.jpg", caption="Your Trip Awaits!", width=700)
+    st.write("Dette er lavet for sjovs skyld, håber selvfølgelig vi kommer til at bruge det :D")
+    st.image("southKoreaHero.jpg", caption="Wohoo!", width=500)
 
 elif sidebar_menu == "Itinerary":
     st.title("🌍 Travel Itinerary - South Korea")
@@ -123,73 +124,37 @@ elif sidebar_menu == "Itinerary":
             else:
                 st.error("Please fill out all fields to add a new entry.")
 
-# Flight Details - Display with checkboxes and allow editing
-if sidebar_menu == "Flights":
+elif sidebar_menu == "Flights":
     st.title("✈️ Flights - Detailed Flight Information")
 
-    # Add a new flight form
-    st.write("### ✈️ Add a New Flight")
-    departure = st.text_input("Departure Location")
-    arrival = st.text_input("Arrival Location")
-    departure_time = st.text_input("Departure Time (e.g., 2025-03-15 14:00 CET)")
-    arrival_time = st.text_input("Arrival Time (e.g., 2025-03-15 16:00 CET)")
-    flight_number = st.text_input("Flight Number")
+    # Outbound Flight: Copenhagen to Seoul (Monday, 11 August 2025)
+    st.write("### ✈️ Outbound Flight: Copenhagen to Seoul (Monday, 11 August 2025)")
 
-    try:
-        # Ensure input time is parsed correctly in CET (Central European Time)
-        cet = pytz.timezone('CET')
-        departure_time = datetime.strptime(departure_time, "%Y-%m-%d %H:%M") if departure_time else None
-        arrival_time = datetime.strptime(arrival_time, "%Y-%m-%d %H:%M") if arrival_time else None
+    # Display outbound flight details
+    st.write(f"**Departure**: Monday, 11 August 2025 at 16:00 from (CPH)")
+    st.write(f"**Arrival**: Monday, 11 August 2025 at 23:00 in (DOH)")
+    st.write(f"**Flight Number**: QR 160 by Qatar Airways")
+    st.write(f"**Baggage Allowance**: 25 kg (Adult, Economy Class)")
+    st.write(f"**Connection Time**: 3 hours 20 minutes")
+    st.write(f"**Transit Time**: 6 hours 0 minutes")
+    st.write(f"**Connection Flight**: Tuesday, 12 August 2025 at 02:20 from (DOH) to Seoul Qatar Airways")
+    st.write(f"**Arrival at Destination**: Tuesday, 12 August 2025 at 17:05 at (ICN) Seoul ")
 
-        # Localize times to CET timezone
-        if departure_time:
-            departure_time = cet.localize(departure_time)
-        if arrival_time:
-            arrival_time = cet.localize(arrival_time)
+    st.write("---")
 
-    except ValueError:
-        departure_time = None
-        arrival_time = None
-        st.error("Invalid time format. Please use 'YYYY-MM-DD HH:MM' format in CET.")
+    # Inbound Flight: Seoul to Copenhagen (Monday, 25 August 2025)
+    st.write("### ✈️ Inbound Flight: Seoul to Copenhagen (Monday, 25 August 2025)")
 
-    if st.button("Save Flight"):
-        if departure and arrival and departure_time and arrival_time and flight_number:
-            flight_data = {
-                "departure": departure,
-                "arrival": arrival,
-                "departure_time": departure_time,
-                "arrival_time": arrival_time,
-                "flight_number": flight_number
-            }
-            flight_id = save_to_firebase("flights", flight_data)  # Save with path "flights"
-            st.success(f"Flight from {departure} to {arrival} added successfully!")
+    # Display inbound flight details
+    st.write(f"**Departure**: Monday, 25 August 2025 at 01:20 from (ICN) South Korea")
+    st.write(f"**Arrival**: Monday, 25 August 2025 at 05:30 in (DOH), Qatar")
+    st.write(f"**Flight Number**: QR 859 by Qatar Airways)")
+    st.write(f"**Baggage Allowance**: 25 kg (Adult, Economy Class)")
+    st.write(f"**Connection Time**: 3 hours 10 minutes")
+    st.write(f"**Transit Time**: 6 hours 25 minutes")
+    st.write(f"**Connection Flight**: Monday, 25 August 2025 at 08:40 from Doha to Copenhagen by Qatar Airways)")
+    st.write(f"**Arrival at Destination**: Monday, 25 August 2025 at 14:05 at(CPH), Denmark")
 
-    # Display existing flight details from Firebase and allow editing
-    flights = get_from_firebase("flights")
-    if flights:
-        st.write("### 🛫 Your Flights")
-        for flight_id, flight in flights.items():
-            with st.expander(f"Edit Flight {flight['flight_number']}"):
-                edited_departure = st.text_input(f"Edit Departure Location", value=flight['departure'], key=f"edit_dep_{flight_id}")
-                edited_arrival = st.text_input(f"Edit Arrival Location", value=flight['arrival'], key=f"edit_arr_{flight_id}")
-                edited_departure_time = st.text_input(f"Edit Departure Time", value=flight['departure_time'].strftime('%Y-%m-%d %H:%M CET'), key=f"edit_dep_time_{flight_id}")
-                edited_arrival_time = st.text_input(f"Edit Arrival Time", value=flight['arrival_time'].strftime('%Y-%m-%d %H:%M CET'), key=f"edit_arr_time_{flight_id}")
-                
-                if st.button(f"Save Changes for Flight {flight['flight_number']}", key=f"save_{flight_id}"):
-                    updated_flight = {
-                        "departure": edited_departure,
-                        "arrival": edited_arrival,
-                        "departure_time": datetime.strptime(edited_departure_time, "%Y-%m-%d %H:%M"),
-                        "arrival_time": datetime.strptime(edited_arrival_time, "%Y-%m-%d %H:%M"),
-                        "flight_number": flight['flight_number']
-                    }
-                    save_to_firebase("flights", updated_flight)  # Update the flight with the correct ID
-                    st.success(f"Flight {flight['flight_number']} updated successfully!")
-
-    # Add button to remove a flight
-    if st.button("❌ Remove Flight"):
-        remove_from_firebase("flights", flight_id)
-        st.success(f"Flight {flight['flight_number']} removed successfully!")
 
 elif sidebar_menu == "Notes":
     st.title("📝 Notes - Add and Edit Notes")
@@ -350,57 +315,3 @@ elif sidebar_menu == "Must Try Eat":
             st.success(f"Added {new_food} to your must-try list!")
         else:
             st.error("Please make sure both fields are filled before adding.")
-
-elif sidebar_menu == "What to Pack":
-    st.title("🧳 What to Pack")
-    st.write("Here you can manage your packing list by checking off items and removing them.")
-
-    # Retrieve packing list items from Firebase
-    packing_list = get_from_firebase("packing_list")
-
-    if packing_list:
-        st.write("### Your Packing List")
-        
-        # Create a dictionary to store the checkboxes and removal buttons
-        checked_items = {}
-        
-        # Loop through the existing packing list items and display them with checkboxes and "X" buttons
-        for item_id, item_data in packing_list.items():
-            item_content = item_data.get('item', 'No item description available')
-
-            # Display each item with a checkbox
-            checkbox_label = f"✔️ {item_content}"
-            is_checked = st.checkbox(checkbox_label, key=f"checkbox_{item_id}")
-
-            # Display the "X" button to remove an item
-            col1, col2 = st.columns([9, 1])  # Create two columns: one for the item and one for the "X"
-            with col1:
-                checked_items[item_id] = is_checked
-            with col2:
-                # Add the "X" button to remove an item
-                if st.button("❌", key=f"delete_{item_id}"):
-                    # Remove the item from Firebase
-                    remove_from_firebase("packing_list", item_id)
-                    st.success(f"Item {item_content} removed successfully!") 
-
-        # Button to save the updated packing list (checked items)
-        if st.button("Save Packing List"):
-            # Update the packing list with checked/un-checked statuses
-            for item_id, is_checked in checked_items.items():
-                # Update the item's "checked" status in Firebase (you could add a "checked" field)
-                updated_item = {"item": packing_list[item_id]["item"], "checked": is_checked}
-                save_to_firebase("packing_list", updated_item)
-                
-            st.success("Packing list updated!")
-
-    # Allow adding new packing list items
-    st.write("### Add New Item to Pack")
-    new_item = st.text_input("New Packing Item")
-
-    if st.button("Save New Item"):
-        if new_item:
-            # Save the new item to Firebase (with unchecked status)
-            save_to_firebase("packing_list", {"item": new_item, "checked": False})
-            st.success("New item added to the packing list!")
-        else:
-            st.error("Please write an item before saving.")
